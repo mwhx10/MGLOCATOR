@@ -77,10 +77,10 @@ document.getElementById('sideLeft' ).addEventListener('change', ()=>toggleTool('
   function drawStar(ctx,pxX,pxY,r){const spikes=5,step=Math.PI/spikes;ctx.save();ctx.fillStyle='green';ctx.beginPath();for(let i=0;i<spikes*2;i++){const ang=i*step-Math.PI/2,rad=(i%2?r/2:r);ctx.lineTo(pxX+Math.cos(ang)*rad,pxY+Math.sin(ang)*rad);}ctx.closePath();ctx.fill();ctx.restore();}
   // Base drawings
   function drawCCBase(){ccCtx.clearRect(0,0,ccCan.width,ccCan.height);const s=scale(ccCan),{cx,cy}=center(ccCan);ccCtx.save();ccCtx.translate(cx,cy);ccCtx.scale(1,-1);
-    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,Math.PI,2*Math.PI);ccCtx.stroke();
-    ccCtx.beginPath();ccCtx.moveTo(-R*s,0);ccCtx.lineTo(R*s,0);ccCtx.stroke();
-    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(0,-R*s);ccCtx.stroke();ccCtx.setLineDash([]);
-    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(0,-R*s,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
+    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,Math.PI/2,3*Math.PI/2);ccCtx.stroke();
+    ccCtx.beginPath();ccCtx.moveTo(0,-R*s);ccCtx.lineTo(0,R*s);ccCtx.stroke();
+    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(-R*s,0);ccCtx.stroke();ccCtx.setLineDash([]);
+    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(-R*s,0,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
   function drawMLOBase(){mloCtx.clearRect(0,0,mloCan.width,mloCan.height);const s=scale(mloCan),{cx,cy}=center(mloCan);mloCtx.save();mloCtx.translate(cx,cy);mloCtx.scale(1,-1);
     mloCtx.lineWidth=3; mloCtx.beginPath(); mloCtx.arc(0,0,R*s,5*Math.PI/3,2*Math.PI/3,true); mloCtx.stroke();
     const p1={x:Math.cos(5*Math.PI/3)*R,y:Math.sin(5*Math.PI/3)*R}; const p2={x:Math.cos(2*Math.PI/3)*R,y:Math.sin(2*Math.PI/3)*R};
@@ -102,7 +102,7 @@ document.getElementById('sideLeft' ).addEventListener('change', ()=>toggleTool('
   // CC click
   ccCan.addEventListener('click', ev=>{
     const {x,y}=pxToMath(ccCan,ev.offsetX,ev.offsetY); ccBad=null; ccPt=null; d3=null;
-    if(y<=0 && x*x+y*y<=R*R){ ccPt={x,y}; d3=x; } else{ ccBad={pxX:ev.offsetX,pxY:ev.offsetY}; }
+    if(x<=0 && x*x+y*y<=R*R){ ccPt={x,y}; d3=-y; } else{ ccBad={pxX:ev.offsetX,pxY:ev.offsetY}; }
     if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
     redrawAll(); calcClock(); });
   // MLO click
@@ -136,10 +136,10 @@ document.getElementById('sideLeft' ).addEventListener('change', ()=>toggleTool('
   function drawStar(ctx,pxX,pxY,r){const spikes=5,step=Math.PI/spikes;ctx.save();ctx.fillStyle='green';ctx.beginPath();for(let i=0;i<spikes*2;i++){const ang=i*step-Math.PI/2;const rad=i%2?r/2:r;ctx.lineTo(pxX+Math.cos(ang)*rad,pxY+Math.sin(ang)*rad);}ctx.closePath();ctx.fill();ctx.restore();}
   // Base drawings
   function drawCCBase(){ccCtx.clearRect(0,0,ccCan.width,ccCan.height);const s=scale(ccCan),{cx,cy}=center(ccCan);ccCtx.save();ccCtx.translate(cx,cy);ccCtx.scale(1,-1);
-    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,Math.PI,2*Math.PI);ccCtx.stroke();
-    ccCtx.beginPath();ccCtx.moveTo(-R*s,0);ccCtx.lineTo(R*s,0);ccCtx.stroke();
-    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(0,-R*s);ccCtx.stroke();ccCtx.setLineDash([]);
-    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(0,-R*s,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
+    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,3*Math.PI/2,Math.PI/2);ccCtx.stroke();
+    ccCtx.beginPath();ccCtx.moveTo(0,-R*s);ccCtx.lineTo(0,R*s);ccCtx.stroke();
+    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(R*s,0);ccCtx.stroke();ccCtx.setLineDash([]);
+    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(R*s,0,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
   function drawMLOBase(){mloCtx.clearRect(0,0,mloCan.width,mloCan.height);const s=scale(mloCan),{cx,cy}=center(mloCan);mloCtx.save();mloCtx.translate(cx,cy);mloCtx.scale(1,-1);
     mloCtx.lineWidth=3; mloCtx.beginPath(); mloCtx.arc(0,0,R*s,Math.PI/3,-2*Math.PI/3,true); mloCtx.stroke();
     const p1={x:1.5,y:2.598}, p2={x:-1.5,y:-2.598}; mloCtx.beginPath();mloCtx.moveTo(p1.x*s,p1.y*s);mloCtx.lineTo(p2.x*s,p2.y*s);mloCtx.stroke();
@@ -160,7 +160,7 @@ document.getElementById('sideLeft' ).addEventListener('change', ()=>toggleTool('
   // CC click
   ccCan.addEventListener('click', ev=>{
     const {offsetX,offsetY}=ev; const {x,y}=pxToMath(ccCan,offsetX,offsetY); ccBad=null; ccPt=null; d1=null;
-    if(y<=0 && x*x+y*y<=R*R){ ccPt={x,y}; d1=x; } else{ ccBad={pxX:offsetX,pxY:offsetY}; }
+    if(x>=0 && x*x+y*y<=R*R){ ccPt={x,y}; d1=y; } else{ ccBad={pxX:offsetX,pxY:offsetY}; }
     if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
     redrawAll(); calcClock(); });
   // MLO click
