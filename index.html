@@ -1,177 +1,647 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<title>Mammographic Lesion Clock‑Face Locator</title>
-<style>
- :root{--bg:#fafafa;--err:#d32f2f;--ok:#00695c;--aux:#1565c0;--brown:#8b4513}
- *{box-sizing:border-box}
- body{margin:0;padding:1rem;font-family:Arial,Helvetica,sans-serif;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:1rem}
- h1{margin:.2rem 0 .6rem;font-size:1.35rem;text-align:center}
- h2{margin:.3rem 0;font-size:1.05rem;text-align:center}
- .row{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center}
- canvas{border:1px solid #555;border-radius:8px;background:#fff;cursor:crosshair}
- #controls{font-size:1rem;margin-bottom:.5rem}
- label.sideLbl{margin-right:.8rem;cursor:pointer}
- .tool{display:none;flex-direction:column;align-items:center;gap:.8rem}
- #rightTool{display:flex}
- #msgR,#msgL{font-weight:bold;font-size:1.15rem;min-height:1.2em;text-align:center}
-</style>
+  <meta charset="utf-8" />
+  <title>Mammographic Lesion Locator</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --err: #d32f2f;
+      --ok: #00695c;
+      --aux: #1565c0;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem
+    }
+
+    h1 {
+      margin: .2rem 0 .6rem;
+      font-size: 1.35rem;
+      text-align: center
+    }
+
+    h2 {
+      margin: .3rem 0;
+      font-size: 1.05rem;
+      text-align: center
+    }
+
+    .row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center
+    }
+
+    canvas {
+      border: 1px solid #555;
+      border-radius: 8px;
+      background: #fff;
+      cursor: crosshair;
+      touch-action: none
+    }
+
+    #controls {
+      font-size: 1rem;
+      margin-bottom: .5rem
+    }
+
+    label.sideLbl {
+      margin-right: .8rem;
+      cursor: pointer
+    }
+
+    .tool {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: .8rem
+    }
+
+    #rightTool {
+      display: flex
+    }
+
+    #msgR,
+    #msgL {
+      font-weight: bold;
+      font-size: 1.15rem;
+      min-height: 1.2em;
+      text-align: center
+    }
+  </style>
 </head>
+
 <body>
- <h1>Mammographic Lesion Clock‑Face Locator</h1>
- <div id="controls">
-   <span class="sideLbl"><input type="radio" name="side" value="right" id="sideRight" checked> Right breast</span>
-   <span class="sideLbl"><input type="radio" name="side" value="left"  id="sideLeft"> Left breast</span>
- </div>
+  <h1>Mammographic Lesion Clock‑Face Locator</h1>
+   <div id="controls">
+    <span class="sideLbl"><input type="radio" name="side" value="right" id="sideRight" checked> Right breast</span>
+    <span class="sideLbl"><input type="radio" name="side" value="left" id="sideLeft"> Left breast</span>
+  </div>
 
- <!-- ===================== RIGHT TOOL ====================== -->
- <div id="rightTool" class="tool">
-   <div class="row">
-     <div><h2>Right CC view</h2><canvas id="r-cc"   width="320" height="320"></canvas></div>
-     <div><h2>Right MLO view</h2><canvas id="r-mlo"  width="320" height="320"></canvas></div>
-     <div><h2>Clock‑face</h2><canvas id="r-clock" width="320" height="320"></canvas></div>
-   </div>
-   <p id="msgR"></p>
- </div>
+  <!-- ===================== RIGHT TOOL ====================== -->
+  <div id="rightTool" class="tool">
+    <div class="row">
+      <div>
+        <h2 id="r-cc-label">Right CC view</h2><canvas id="r-cc" width="350" height="350"></canvas>
+      </div>
+      <div>
+        <h2 id="r-mlo-label">Right MLO view</h2><canvas id="r-mlo" width="350" height="350"></canvas>
+      </div>
+      <div>
+        <h2>Clock‑face</h2><canvas id="r-clock" width="350" height="350"></canvas>
+      </div>
+    </div>
+    <p id="msgR"></p>
+  </div>
 
- <!-- ===================== LEFT TOOL ====================== -->
- <div id="leftTool" class="tool">
-   <div class="row">
-     <div><h2>Left CC view</h2><canvas id="l-cc"   width="320" height="320"></canvas></div>
-     <div><h2>Left MLO view</h2><canvas id="l-mlo"  width="320" height="320"></canvas></div>
-     <div><h2>Clock‑face</h2><canvas id="l-clock" width="320" height="320"></canvas></div>
-   </div>
-   <p id="msgL"></p>
- </div>
+  <!-- ===================== LEFT TOOL ====================== -->
+  <div id="leftTool" class="tool">
+    <div class="row">
+      <div>
+        <h2 id="l-cc-label">Left CC view</h2><canvas id="l-cc" width="350" height="350"></canvas>
+      </div>
+      <div>
+        <h2 id="l-mlo-label">Left MLO view</h2><canvas id="l-mlo" width="350" height="350"></canvas>
+      </div>
+      <div>
+        <h2>Clock‑face</h2><canvas id="l-clock" width="350" height="350"></canvas>
+      </div>
+    </div>
+    <p id="msgL"></p>
+  </div>
 
-<script>
-// ---------- global toggle between tools ----------
-function toggleTool(which){
-  document.getElementById('rightTool').style.display = which==='right' ? 'flex' : 'none';
-  document.getElementById('leftTool' ).style.display = which==='left'  ? 'flex' : 'none';
-}
+  <script>
+    // ---------- global toggle between tools ----------
+    function toggleTool(which) {
+      document.getElementById('rightTool').style.display = which === 'right' ? 'flex' : 'none';
+      document.getElementById('leftTool').style.display = which === 'left' ? 'flex' : 'none';
+    }
 
-document.getElementById('sideRight').addEventListener('change', ()=>toggleTool('right'));
-document.getElementById('sideLeft' ).addEventListener('change', ()=>toggleTool('left'));
+    document.getElementById('sideRight').addEventListener('change', () => toggleTool('right'));
+    document.getElementById('sideLeft').addEventListener('change', () => toggleTool('left'));
 
-// ============================================================
-//                 RIGHT‑BREAST LOCATOR (v3.1)
-//    * wrapped in an IIFE so its variables stay local *
-// ============================================================
-(function(){
-  // Constants
-  const R=3, PX_SCALE=0.45, DOT_R=5, NIP_R=10, BLUE_X=6, SQ3=Math.sqrt(3);
-  // Canvas contexts within right tool container
-  const ccCan=document.getElementById('r-cc'),   mloCan=document.getElementById('r-mlo'),   ckCan=document.getElementById('r-clock');
-  const msg=document.getElementById('msgR');
-  const ccCtx=ccCan.getContext('2d'), mloCtx=mloCan.getContext('2d'), ckCtx=ckCan.getContext('2d');
-  // State
-  let ccPt=null, ccBad=null, mloPt=null, mloBad=null, d3=null, d4=null;
-  // Helpers
-  function scale(c){return Math.min(c.width,c.height)*PX_SCALE/R;}
-  function center(c){return{cx:c.width/2,cy:c.height/2};}
-  function pxToMath(c,pxX,pxY){const s=scale(c),{cx,cy}=center(c);return{x:(pxX-cx)/s,y:(cy-pxY)/s};}
-  function mathToPx(c,x,y){const s=scale(c),{cx,cy}=center(c);return{pxX:cx+x*s,pxY:cy-y*s};}
-  function drawBlueX(ctx,pxX,pxY){ctx.save();ctx.strokeStyle='var(--aux)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pxX-BLUE_X,pxY-BLUE_X);ctx.lineTo(pxX+BLUE_X,pxY+BLUE_X);ctx.moveTo(pxX-BLUE_X,pxY+BLUE_X);ctx.lineTo(pxX+BLUE_X,pxY-BLUE_X);ctx.stroke();ctx.restore();}
-  function drawStar(ctx,pxX,pxY,r){const spikes=5,step=Math.PI/spikes;ctx.save();ctx.fillStyle='green';ctx.beginPath();for(let i=0;i<spikes*2;i++){const ang=i*step-Math.PI/2,rad=(i%2?r/2:r);ctx.lineTo(pxX+Math.cos(ang)*rad,pxY+Math.sin(ang)*rad);}ctx.closePath();ctx.fill();ctx.restore();}
-  // Base drawings
-  function drawCCBase(){ccCtx.clearRect(0,0,ccCan.width,ccCan.height);const s=scale(ccCan),{cx,cy}=center(ccCan);ccCtx.save();ccCtx.translate(cx,cy);ccCtx.scale(1,-1);
-    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,Math.PI/2,3*Math.PI/2);ccCtx.stroke();
-    ccCtx.beginPath();ccCtx.moveTo(0,-R*s);ccCtx.lineTo(0,R*s);ccCtx.stroke();
-    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(-R*s,0);ccCtx.stroke();ccCtx.setLineDash([]);
-    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(-R*s,0,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
-  function drawMLOBase(){mloCtx.clearRect(0,0,mloCan.width,mloCan.height);const s=scale(mloCan),{cx,cy}=center(mloCan);mloCtx.save();mloCtx.translate(cx,cy);mloCtx.scale(1,-1);
-    mloCtx.lineWidth=3; mloCtx.beginPath(); mloCtx.arc(0,0,R*s,5*Math.PI/3,2*Math.PI/3,true); mloCtx.stroke();
-    const p1={x:Math.cos(5*Math.PI/3)*R,y:Math.sin(5*Math.PI/3)*R}; const p2={x:Math.cos(2*Math.PI/3)*R,y:Math.sin(2*Math.PI/3)*R};
-    mloCtx.beginPath();mloCtx.moveTo(p1.x*s,p1.y*s);mloCtx.lineTo(p2.x*s,p2.y*s);mloCtx.stroke();
-    const nip={x:-SQ3*1.5,y:-1.5}; mloCtx.setLineDash([4,4]);mloCtx.lineWidth=1.5;mloCtx.strokeStyle='#888';mloCtx.beginPath();mloCtx.moveTo(0,0);mloCtx.lineTo(nip.x*s,nip.y*s);mloCtx.stroke();mloCtx.setLineDash([]);
-    mloCtx.fillStyle='#000';mloCtx.beginPath();mloCtx.arc(nip.x*s,nip.y*s,NIP_R,0,2*Math.PI);mloCtx.fill();mloCtx.restore();}
-  function drawClockBase(){ckCtx.clearRect(0,0,ckCan.width,ckCan.height);const s=scale(ckCan),{cx,cy}=center(ckCan);ckCtx.save();ckCtx.translate(cx,cy);ckCtx.scale(1,-1);
-    ckCtx.lineWidth=3;ckCtx.strokeStyle='var(--brown)';ckCtx.beginPath();ckCtx.arc(0,0,R*s,0,2*Math.PI);ckCtx.stroke();
-    ckCtx.lineWidth=1;ckCtx.strokeStyle='#bbb';for(let k=0;k<12;k++){const ang=k*Math.PI/6;ckCtx.beginPath();ckCtx.moveTo(0,0);ckCtx.lineTo(R*s*Math.cos(ang),R*s*Math.sin(ang));ckCtx.stroke();}
-    // center dot (above radiating lines)
-    ckCtx.fillStyle='#666';ckCtx.beginPath();ckCtx.arc(0,0,10,0,2*Math.PI);ckCtx.fill();
-    ckCtx.restore();}
-  function redrawAll(){drawCCBase();drawMLOBase();drawClockBase();
-    if(ccPt){const{pxX,pxY}=mathToPx(ccCan,ccPt.x,ccPt.y);ccCtx.fillStyle='red';ccCtx.beginPath();ccCtx.arc(pxX,pxY,DOT_R,0,2*Math.PI);ccCtx.fill();}
-    if(ccBad){drawBlueX(ccCtx,ccBad.pxX,ccBad.pxY);}if(mloPt){const{pxX,pxY}=mathToPx(mloCan,mloPt.x,mloPt.y);mloCtx.fillStyle='red';mloCtx.beginPath();mloCtx.arc(pxX,pxY,DOT_R,0,2*Math.PI);mloCtx.fill();}
-    if(mloBad){drawBlueX(mloCtx,mloBad.pxX,mloBad.pxY);}if(d3!==null&&d4!==null){const X=d3,Y=(d3-2*d4)/SQ3;const{pxX,pxY}=mathToPx(ckCan,X,Y);drawStar(ckCtx,pxX,pxY,DOT_R*2);} }
-  function calcClock(){ if(d3===null||d4===null) return; const X=d3, Y=(d3-2*d4)/SQ3; if(X*X+Y*Y>R*R){ msg.style.color='var(--err)'; msg.textContent='Invalid calculated lesion location'; redrawAll(); return; }
-    const theta=Math.atan2(d3-2*d4, SQ3*d3)*180/Math.PI; let hr=Math.round(((450-theta)%360)/30); if(hr===0) hr=12; msg.style.color='var(--ok)'; msg.textContent=`Lesion at ${hr} o'clock`; redrawAll(); }
-  // CC click
-  ccCan.addEventListener('click', ev=>{
-    const {x,y}=pxToMath(ccCan,ev.offsetX,ev.offsetY); ccBad=null; ccPt=null; d3=null;
-    if(x<=0 && x*x+y*y<=R*R){ ccPt={x,y}; d3=-y; } else{ ccBad={pxX:ev.offsetX,pxY:ev.offsetY}; }
-    if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
-    redrawAll(); calcClock(); });
-  // MLO click
-  mloCan.addEventListener('click', ev=>{
-    const {x,y}=pxToMath(mloCan,ev.offsetX,ev.offsetY); mloBad=null; mloPt=null; d4=null;
-    if(y<=-SQ3*x && x*x+y*y<=R*R){ mloPt={x,y}; d4=(x-SQ3*y)/2; } else{ mloBad={pxX:ev.offsetX,pxY:ev.offsetY}; }
-    if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
-    redrawAll(); calcClock(); });
-  // initial draw
-  redrawAll();
-})();
+    // ============================================================
+    //                 RIGHT‑BREAST LOCATOR (v3.1)
+    //    * wrapped in an IIFE so its variables stay local *
+    // ============================================================
+    (function () {
+      // Constants
+      const R = 3, PX_SCALE = 0.45, DOT_R = 5, NIP_R = 10, BLUE_X = 6, SQ2 = Math.sqrt(2), SQ3 = Math.sqrt(3);
+      // Canvas contexts within right tool container
+      const ccCan = document.getElementById('r-cc'), mloCan = document.getElementById('r-mlo'), ckCan = document.getElementById('r-clock');
+      const msg = document.getElementById('msgR');
+      const ccCtx = ccCan.getContext('2d'), mloCtx = mloCan.getContext('2d'), ckCtx = ckCan.getContext('2d');
+      // State
+      let ccPt = null, ccBad = null, mloPt = null, mloBad = null, d3 = null, d4 = null,
+        mloAngle = Math.PI / 4, ccAngle = 0,
+        dragMLO = false, dragCC = false, dragSide = 0, dragSideCC = 0,
+        dragStart, dragStartCC;
 
-// ============================================================
-//                 LEFT‑BREAST LOCATOR (v2.4)
-// ============================================================
-(function(){
-  // Constants
-  const R=3, PX_SCALE=0.45, DOT_R=5, NIP_R=10, BLUE_X=6, SQ3=Math.sqrt(3);
-  // Canvas contexts within left tool
-  const ccCan=document.getElementById('l-cc'),   mloCan=document.getElementById('l-mlo'),   ckCan=document.getElementById('l-clock');
-  const msg=document.getElementById('msgL');
-  const ccCtx=ccCan.getContext('2d'), mloCtx=mloCan.getContext('2d'), ckCtx=ckCan.getContext('2d');
-  // State
-  let ccPt=null, ccBad=null, mloPt=null, mloBad=null, d1=null, d2=null;
-  // Helpers
-  function scale(c){return Math.min(c.width,c.height)*PX_SCALE/R;}
-  function center(c){return{cx:c.width/2,cy:c.height/2};}
-  function pxToMath(c,pxX,pxY){const s=scale(c),{cx,cy}=center(c);return{x:(pxX-cx)/s,y:(cy-pxY)/s};}
-  function mathToPx(c,x,y){const s=scale(c),{cx,cy}=center(c);return{pxX:cx+x*s,pxY:cy-y*s};}
-  function drawBlueX(ctx,pxX,pxY){ctx.save();ctx.strokeStyle='var(--aux)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pxX-BLUE_X,pxY-BLUE_X);ctx.lineTo(pxX+BLUE_X,pxY+BLUE_X);ctx.moveTo(pxX-BLUE_X,pxY+BLUE_X);ctx.lineTo(pxX+BLUE_X,pxY-BLUE_X);ctx.stroke();ctx.restore();}
-  function drawStar(ctx,pxX,pxY,r){const spikes=5,step=Math.PI/spikes;ctx.save();ctx.fillStyle='green';ctx.beginPath();for(let i=0;i<spikes*2;i++){const ang=i*step-Math.PI/2;const rad=i%2?r/2:r;ctx.lineTo(pxX+Math.cos(ang)*rad,pxY+Math.sin(ang)*rad);}ctx.closePath();ctx.fill();ctx.restore();}
-  // Base drawings
-  function drawCCBase(){ccCtx.clearRect(0,0,ccCan.width,ccCan.height);const s=scale(ccCan),{cx,cy}=center(ccCan);ccCtx.save();ccCtx.translate(cx,cy);ccCtx.scale(1,-1);
-    ccCtx.lineWidth=3;ccCtx.beginPath();ccCtx.arc(0,0,R*s,3*Math.PI/2,Math.PI/2);ccCtx.stroke();
-    ccCtx.beginPath();ccCtx.moveTo(0,-R*s);ccCtx.lineTo(0,R*s);ccCtx.stroke();
-    ccCtx.setLineDash([4,4]);ccCtx.lineWidth=1.5;ccCtx.strokeStyle='#888';ccCtx.beginPath();ccCtx.moveTo(0,0);ccCtx.lineTo(R*s,0);ccCtx.stroke();ccCtx.setLineDash([]);
-    ccCtx.fillStyle='#000';ccCtx.beginPath();ccCtx.arc(R*s,0,NIP_R,0,2*Math.PI);ccCtx.fill();ccCtx.restore();}
-  function drawMLOBase(){mloCtx.clearRect(0,0,mloCan.width,mloCan.height);const s=scale(mloCan),{cx,cy}=center(mloCan);mloCtx.save();mloCtx.translate(cx,cy);mloCtx.scale(1,-1);
-    mloCtx.lineWidth=3; mloCtx.beginPath(); mloCtx.arc(0,0,R*s,Math.PI/3,-2*Math.PI/3,true); mloCtx.stroke();
-    const p1={x:1.5,y:2.598}, p2={x:-1.5,y:-2.598}; mloCtx.beginPath();mloCtx.moveTo(p1.x*s,p1.y*s);mloCtx.lineTo(p2.x*s,p2.y*s);mloCtx.stroke();
-    const nip={x:2.598,y:-1.5}; mloCtx.setLineDash([4,4]);mloCtx.lineWidth=1.5;mloCtx.strokeStyle='#888';mloCtx.beginPath();mloCtx.moveTo(0,0);mloCtx.lineTo(nip.x*s,nip.y*s);mloCtx.stroke();mloCtx.setLineDash([]);
-    mloCtx.fillStyle='#000';mloCtx.beginPath();mloCtx.arc(nip.x*s,nip.y*s,NIP_R,0,2*Math.PI);mloCtx.fill();mloCtx.restore();}
-  function drawClockBase(){ckCtx.clearRect(0,0,ckCan.width,ckCan.height);const s=scale(ckCan),{cx,cy}=center(ckCan);ckCtx.save();ckCtx.translate(cx,cy);ckCtx.scale(1,-1);
-    ckCtx.lineWidth=3;ckCtx.strokeStyle='var(--brown)';ckCtx.beginPath();ckCtx.arc(0,0,R*s,0,2*Math.PI);ckCtx.stroke();
-    ckCtx.lineWidth=1;ckCtx.strokeStyle='#bbb';for(let k=0;k<12;k++){const ang=k*Math.PI/6;ckCtx.beginPath();ckCtx.moveTo(0,0);ckCtx.lineTo(R*s*Math.cos(ang),R*s*Math.sin(ang));ckCtx.stroke();}
-    // center dot above radiating lines
-    ckCtx.fillStyle='#666';ckCtx.beginPath();ckCtx.arc(0,0,10,0,2*Math.PI);ckCtx.fill();
-    ckCtx.restore();}
-  function redrawAll(){drawCCBase();drawMLOBase();drawClockBase();
-    if(ccPt){const{pxX,pxY}=mathToPx(ccCan,ccPt.x,ccPt.y);ccCtx.fillStyle='red';ccCtx.beginPath();ccCtx.arc(pxX,pxY,DOT_R,0,2*Math.PI);ccCtx.fill();}
-    if(ccBad){drawBlueX(ccCtx,ccBad.pxX,ccBad.pxY);} if(mloPt){const{pxX,pxY}=mathToPx(mloCan,mloPt.x,mloPt.y);mloCtx.fillStyle='red';mloCtx.beginPath();mloCtx.arc(pxX,pxY,DOT_R,0,2*Math.PI);mloCtx.fill();}
-    if(mloBad){drawBlueX(mloCtx,mloBad.pxX,mloBad.pxY);} if(d1!==null&&d2!==null){const x=d1,y=(2*d2-d1)/SQ3;const{pxX,pxY}=mathToPx(ckCan,x,y);drawStar(ckCtx,pxX,pxY,DOT_R*2);} }
-  function calcClock(){ if(d1===null||d2===null) return; const x=d1, y=(2*d2-d1)/SQ3; if(x*x+y*y>R*R){ msg.style.color='var(--err)'; msg.textContent='Invalid calculated lesion location'; redrawAll(); return; }
-    const theta=Math.atan2(2*d2-d1,SQ3*d1)*180/Math.PI; let hr=Math.round(((450-theta)%360)/30); if(hr===0) hr=12; msg.style.color='var(--ok)'; msg.textContent=`Lesion at ${hr} o'clock`; redrawAll(); }
-  // CC click
-  ccCan.addEventListener('click', ev=>{
-    const {offsetX,offsetY}=ev; const {x,y}=pxToMath(ccCan,offsetX,offsetY); ccBad=null; ccPt=null; d1=null;
-    if(x>=0 && x*x+y*y<=R*R){ ccPt={x,y}; d1=y; } else{ ccBad={pxX:offsetX,pxY:offsetY}; }
-    if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
-    redrawAll(); calcClock(); });
-  // MLO click
-  mloCan.addEventListener('click', ev=>{
-    const {offsetX,offsetY}=ev; const {x,y}=pxToMath(mloCan,offsetX,offsetY); mloBad=null; mloPt=null; d2=null;
-    if(y<=SQ3*x && x*x+y*y<=R*R){ mloPt={x,y}; d2=(x+SQ3*y)/2; } else{ mloBad={pxX:offsetX,pxY:offsetY}; }
-    if(ccBad || mloBad){ let errs=[]; if(ccBad) errs.push('CC'); if(mloBad) errs.push('MLO'); msg.style.color='var(--aux)'; msg.textContent=`Click is outside the breast (${errs.join(' & ')})`; } else{ msg.textContent=''; }
-    redrawAll(); calcClock(); });
-  // initial draw
-  redrawAll();
-})();
-</script>
+      function updateMLOLabel() {
+        const deg = Math.round((Math.PI / 2 - mloAngle) * 180 / Math.PI);
+        const lbl = document.getElementById('r-mlo-label');
+        if (deg <= 0) lbl.textContent = 'Right CC view';
+        else if (deg >= 90) lbl.textContent = 'Right ML view';
+        else lbl.textContent = `Right MLO view (${deg}\u00B0)`;
+      }
+
+      function updateCCLabel() {
+        const deg = Math.round((Math.PI / 2 - ccAngle) * 180 / Math.PI);
+        const lbl = document.getElementById('r-cc-label');
+        if (deg <= 0) lbl.textContent = 'Right CC view';
+        else if (deg >= 90) lbl.textContent = 'Right ML view';
+        else lbl.textContent = `Right MLO view (${deg}\u00B0)`;
+      }
+
+      function snapAngle(a) {
+        const deg = (Math.PI / 2 - a) * 180 / Math.PI;
+        for (const target of [0, 45, 60, 90]) {
+          if (Math.abs(deg - target) <= 5) {
+            return Math.PI / 2 - target * Math.PI / 180;
+          }
+        }
+        return a;
+      }
+
+      // Helpers
+      function scale(c) { return Math.min(c.width, c.height) * PX_SCALE / R; }
+      function center(c) { return { cx: c.width / 2, cy: c.height / 2 }; }
+      function pxToMath(c, pxX, pxY) { const s = scale(c), { cx, cy } = center(c); return { x: (pxX - cx) / s, y: (cy - pxY) / s }; }
+      function mathToPx(c, x, y) { const s = scale(c), { cx, cy } = center(c); return { pxX: cx + x * s, pxY: cy - y * s }; }
+      function drawBlueX(ctx, pxX, pxY) { ctx.save(); ctx.strokeStyle = '#08080a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pxX - BLUE_X, pxY - BLUE_X); ctx.lineTo(pxX + BLUE_X, pxY + BLUE_X); ctx.moveTo(pxX - BLUE_X, pxY + BLUE_X); ctx.lineTo(pxX + BLUE_X, pxY - BLUE_X); ctx.stroke(); ctx.restore(); }
+
+      // Draw a star with 5 spikes (for right breast)
+      function drawStar(ctx, pxX, pxY, r) { const spikes = 5, step = Math.PI / spikes; ctx.save(); ctx.fillStyle = '#91dac2'; ctx.beginPath(); for (let i = 0; i < spikes * 2; i++) { const ang = i * step - Math.PI / 2, rad = (i % 2 ? r / 2 : r); ctx.lineTo(pxX + Math.cos(ang) * rad, pxY + Math.sin(ang) * rad); } ctx.closePath(); ctx.fill(); ctx.restore(); }
+
+      // Base drawings
+      function drawCCBase() {
+        ccCtx.clearRect(0, 0, ccCan.width, ccCan.height); const s = scale(ccCan), { cx, cy } = center(ccCan); ccCtx.save(); ccCtx.translate(cx, cy); ccCtx.scale(1, -1);
+        ccCtx.strokeStyle = '#c8a3ff';ccCtx.lineWidth = 3; ccCtx.beginPath(); ccCtx.arc(0, 0, R * s, Math.PI / 2, 3 * Math.PI / 2); ccCtx.stroke();
+        ccCtx.beginPath(); ccCtx.moveTo(0, -R * s); ccCtx.lineTo(0, R * s); ccCtx.stroke();
+        ccCtx.setLineDash([6, 9]); ccCtx.lineWidth = 3; ccCtx.strokeStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.moveTo(0, 0); ccCtx.lineTo(-R * s, 0); ccCtx.stroke(); ccCtx.setLineDash([]);
+        ccCtx.fillStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.arc(-R * s, 0, NIP_R, 0, 2 * Math.PI); ccCtx.fill(); ccCtx.restore();
+      }
+      function drawMLOBase() {
+        mloCtx.clearRect(0, 0, mloCan.width, mloCan.height); const s = scale(mloCan), { cx, cy } = center(mloCan); mloCtx.save(); mloCtx.translate(cx, cy); mloCtx.scale(1, -1);
+        mloCtx.strokeStyle = '#ed87a0'; mloCtx.lineWidth = 3; mloCtx.beginPath(); mloCtx.arc(0, 0, R * s, 5 * Math.PI / 3, 2 * Math.PI / 3, true); mloCtx.stroke();
+        const p1 = { x: Math.cos(5 * Math.PI / 3) * R, y: Math.sin(5 * Math.PI / 3) * R }; const p2 = { x: Math.cos(2 * Math.PI / 3) * R, y: Math.sin(2 * Math.PI / 3) * R };
+        mloCtx.beginPath(); mloCtx.moveTo(p1.x * s, p1.y * s); mloCtx.lineTo(p2.x * s, p2.y * s); mloCtx.stroke();
+        const nip = { x: -SQ3 * 1.5, y: -1.5 }; mloCtx.setLineDash([6, 9]); mloCtx.lineWidth = 3; mloCtx.strokeStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.moveTo(0, 0); mloCtx.lineTo(nip.x * s, nip.y * s); mloCtx.stroke(); mloCtx.setLineDash([]);
+        mloCtx.fillStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.arc(nip.x * s, nip.y * s, NIP_R, 0, 2 * Math.PI); mloCtx.fill(); mloCtx.restore();
+      }
+      function drawClockBase() {
+        ckCtx.clearRect(0, 0, ckCan.width, ckCan.height); const s = scale(ckCan), { cx, cy } = center(ckCan); ckCtx.save(); ckCtx.translate(cx, cy); ckCtx.scale(1, -1);
+        ckCtx.lineWidth = 3; ckCtx.strokeStyle = '#000'; ckCtx.beginPath(); ckCtx.arc(0, 0, R * s, 0, 2 * Math.PI); ckCtx.stroke();
+
+        ckCtx.lineWidth = 1; ckCtx.strokeStyle = '#bbb';
+        for (let k = 0; k < 12; k++) {
+          const ang = k * Math.PI / 6;
+          ckCtx.beginPath();
+          ckCtx.moveTo(0, 0);
+          ckCtx.lineTo(R * s * Math.cos(ang), R * s * Math.sin(ang));
+          ckCtx.stroke();
+        }
+
+        // 12‑6 o'clock dotted line
+        ckCtx.setLineDash([6, 9]);
+        ckCtx.strokeStyle = '#c8a3ff';
+        ckCtx.lineWidth = 3;
+        const cosC = Math.cos(ccAngle), sinC = Math.sin(ccAngle);
+        ckCtx.beginPath();
+        ckCtx.moveTo(-R * s * cosC, -R * s * sinC);
+        ckCtx.lineTo(R * s * cosC, R * s * sinC);
+        ckCtx.stroke();
+        ckCtx.setLineDash([]);
+
+        // paddles tangent to the circle at 12 and 6 o'clock
+        const padHalf = R * 0.17 * s;      // paddle length in px
+        ckCtx.strokeStyle = "#c8a3ff";
+        ckCtx.lineWidth = 11;
+        ckCtx.beginPath();
+        const pxC = R * 1.06 * s * cosC, pyC = R * 1.06 * s * sinC;
+        const tCosC = Math.cos(ccAngle + Math.PI / 2), tSinC = Math.sin(ccAngle + Math.PI / 2);
+        ckCtx.moveTo(pxC - padHalf * tCosC, pyC - padHalf * tSinC);   // top paddle
+        ckCtx.lineTo(pxC + padHalf * tCosC, pyC + padHalf * tSinC);
+        ckCtx.moveTo(-pxC - padHalf * tCosC, -pyC - padHalf * tSinC);   // bottom paddle
+        ckCtx.lineTo(-pxC + padHalf * tCosC, -pyC + padHalf * tSinC);
+        ckCtx.stroke();
+
+        /* —---- NEW:  MLO line and paddle ----- */
+        ckCtx.setLineDash([6, 9]);            // dotted
+        ckCtx.strokeStyle = '#ed87a0';       // thin pink
+        ckCtx.lineWidth = 3;
+
+        const cosA = Math.cos(mloAngle), sinA = Math.sin(mloAngle);
+        ckCtx.beginPath();
+        ckCtx.moveTo(-R * s * cosA, -R * s * sinA);
+        ckCtx.lineTo(R * s * cosA, R * s * sinA); // stop at the circle, not beyond
+        ckCtx.stroke();
+
+        ckCtx.setLineDash([]);               // reset dashes
+
+        // draggable paddles at both ends of MLO line
+        ckCtx.strokeStyle = '#ed87a0';
+        ckCtx.lineWidth = 11;
+        ckCtx.beginPath();
+        const px = R * 1.06 * s * cosA, py = R * 1.06 * s * sinA;
+        const tCos = Math.cos(mloAngle + Math.PI / 2), tSin = Math.sin(mloAngle + Math.PI / 2);
+        ckCtx.moveTo(px - padHalf * tCos, py - padHalf * tSin);
+        ckCtx.lineTo(px + padHalf * tCos, py + padHalf * tSin);
+        ckCtx.moveTo(-px - padHalf * tCos, -py - padHalf * tSin);
+        ckCtx.lineTo(-px + padHalf * tCos, -py + padHalf * tSin);
+        ckCtx.stroke();
+
+        // center dot (above radiating lines)
+        ckCtx.fillStyle = '#666'; ckCtx.beginPath(); ckCtx.arc(0, 0, 10, 0, 2 * Math.PI); ckCtx.fill();
+        ckCtx.restore();
+      }
+      function redrawAll() {
+        drawCCBase(); drawMLOBase(); drawClockBase();
+
+        // CC point
+        if (ccPt) { const { pxX, pxY } = mathToPx(ccCan, ccPt.x, ccPt.y); ccCtx.fillStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.arc(pxX, pxY, DOT_R, 0, 2 * Math.PI); ccCtx.fill(); }
+        if (ccBad) { drawBlueX(ccCtx, ccBad.pxX, ccBad.pxY); }
+
+        // MLO point
+        if (mloPt) { const { pxX, pxY } = mathToPx(mloCan, mloPt.x, mloPt.y); mloCtx.fillStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.arc(pxX, pxY, DOT_R, 0, 2 * Math.PI); mloCtx.fill(); }
+        if (mloBad) { drawBlueX(mloCtx, mloBad.pxX, mloBad.pxY); }
+        if (d3 !== null && d4 !== null) {
+          const alpha = ccAngle, beta = mloAngle,
+            sinD = Math.sin(alpha - beta),
+            X = (d3 * Math.cos(beta) - d4 * Math.cos(alpha)) / sinD,
+            Y = (d3 * Math.sin(beta) - d4 * Math.sin(alpha)) / sinD;
+          const { pxX, pxY } = mathToPx(ckCan, X, Y);
+          drawStar(ckCtx, pxX, pxY, DOT_R * 2);
+        }
+      }
+      function calcClock() {
+        if (d3 === null || d4 === null) return;
+        const alpha = ccAngle, beta = mloAngle,
+          sinD = Math.sin(alpha - beta);
+        if (Math.abs(sinD) < 1e-6) {
+          msg.style.color = 'var(--err)';
+          msg.textContent = 'Lesion localization requires projections from differnt angles';
+          redrawAll();
+          return;
+        }
+        const X = (d3 * Math.cos(beta) - d4 * Math.cos(alpha)) / sinD,
+          Y = (d3 * Math.sin(beta) - d4 * Math.sin(alpha)) / sinD;
+        if (X * X + Y * Y > R * R) {
+          msg.style.color = 'var(--err)';
+          msg.textContent = 'Invalid lesion location calculated';
+          redrawAll();
+          return;
+        }
+        const theta = Math.atan2(Y, X) * 180 / Math.PI;
+        let hr = Math.round(((450 - theta) % 360) / 30);
+        if (hr === 0) hr = 12;
+        msg.style.color = 'var(--ok)';
+        msg.textContent = `Lesion at ${hr} o'clock`;
+        redrawAll();
+      }
+
+      // CC click
+      ccCan.addEventListener('click', ev => {
+        const { x, y } = pxToMath(ccCan, ev.offsetX, ev.offsetY); ccBad = null; ccPt = null; d3 = null;
+        if (x <= 0 && x * x + y * y <= R * R) { ccPt = { x, y }; d3 = -y; } else { ccBad = { pxX: ev.offsetX, pxY: ev.offsetY }; }
+        if (ccBad || mloBad) { let errs = []; if (ccBad) errs.push('CC'); if (mloBad) errs.push('MLO'); msg.style.color = 'var(--aux)'; msg.textContent = `Click is outside the breast (${errs.join(' & ')})`; } else { msg.textContent = ''; }
+        redrawAll(); calcClock();
+      });
+
+      // MLO click
+      mloCan.addEventListener('click', ev => {
+        const { x, y } = pxToMath(mloCan, ev.offsetX, ev.offsetY); mloBad = null; mloPt = null; d4 = null;
+        if (y <= -SQ3 * x && x * x + y * y <= R * R) { mloPt = { x, y }; d4 = (x - SQ3 * y) / 2; } else { mloBad = { pxX: ev.offsetX, pxY: ev.offsetY }; }
+        if (ccBad || mloBad) { let errs = []; if (ccBad) errs.push('CC'); if (mloBad) errs.push('MLO'); msg.style.color = 'var(--aux)'; msg.textContent = `Click is outside the breast (${errs.join(' & ')})`; } else { msg.textContent = ''; }
+        redrawAll(); calcClock();
+      });
+
+      // --- drag paddles on clock face ---
+      ckCan.addEventListener('pointerdown', ev => {
+        const { x, y } = pxToMath(ckCan, ev.offsetX, ev.offsetY);
+        const hx = 1.05 * R * Math.cos(mloAngle), hy = 1.05 * R * Math.sin(mloAngle);
+        const hx2 = -hx, hy2 = -hy;
+        dragSide = 0; dragSideCC = 0; dragMLO = dragCC = false;
+        if (Math.hypot(x - hx, y - hy) <= 0.7) { dragSide = 1; dragMLO = true; }
+        else if (Math.hypot(x - hx2, y - hy2) <= 0.7) { dragSide = -1; dragMLO = true; }
+        if (dragMLO) { dragStart = mloAngle; return; }
+        const cx1 = 1.05 * R * Math.cos(ccAngle), cy1 = 1.05 * R * Math.sin(ccAngle);
+        const cx2 = -cx1, cy2 = -cy1;
+        if (Math.hypot(x - cx1, y - cy1) <= 0.7) { dragSideCC = 1; dragCC = true; }
+        else if (Math.hypot(x - cx2, y - cy2) <= 0.7) { dragSideCC = -1; dragCC = true; }
+        if (dragCC) dragStartCC = ccAngle;
+      });
+      ckCan.addEventListener('pointermove', ev => {
+        if (dragMLO || dragCC) {
+          const { x, y } = pxToMath(ckCan, ev.offsetX, ev.offsetY);
+          if (dragMLO) {
+            let ang = Math.atan2(y * dragSide, x * dragSide);
+            if ((dragSide === 1 && x <= 0) || (dragSide === -1 && x >= 0)) ang = Math.PI / 2;
+            if (ang > Math.PI / 2) ang = Math.PI / 2;
+            if (ang < 0) ang = 0;
+            ang = snapAngle(ang);
+            mloAngle = ang;
+          } else if (dragCC) {
+            let ang = Math.atan2(y * dragSideCC, x * dragSideCC);
+            if ((dragSideCC === 1 && x <= 0) || (dragSideCC === -1 && x >= 0)) ang = Math.PI / 2;
+            if (ang > Math.PI / 2) ang = Math.PI / 2;
+            if (ang < 0) ang = 0;
+            ang = snapAngle(ang);
+            ccAngle = ang;
+          }
+          redrawAll();
+          updateMLOLabel();
+          updateCCLabel();
+          calcClock();
+        }
+      });
+      ckCan.addEventListener('pointerup', () => {
+        dragMLO = dragCC = false;
+        dragSide = dragSideCC = 0;
+        redrawAll();
+        updateMLOLabel();
+        updateCCLabel();
+      });
+      ckCan.addEventListener('pointerleave', () => {
+        dragMLO = dragCC = false;
+        dragSide = dragSideCC = 0;
+        redrawAll();
+        updateMLOLabel();
+        updateCCLabel();
+      });
+
+      // initial draw
+      redrawAll();
+      updateMLOLabel();
+      updateCCLabel();
+    })();
+
+    // ============================================================
+    //                 LEFT‑BREAST LOCATOR (v2.4)
+    // ============================================================
+    (function () {
+      // Constants
+      const R = 3, PX_SCALE = 0.45, DOT_R = 5, NIP_R = 10, BLUE_X = 6, SQ2 = Math.sqrt(2), SQ3 = Math.sqrt(3);
+      // Canvas contexts within left tool
+      const ccCan = document.getElementById('l-cc'), mloCan = document.getElementById('l-mlo'), ckCan = document.getElementById('l-clock');
+      const msg = document.getElementById('msgL');
+      const ccCtx = ccCan.getContext('2d'), mloCtx = mloCan.getContext('2d'), ckCtx = ckCan.getContext('2d');
+      // State
+      let ccPt = null, ccBad = null, mloPt = null, mloBad = null, d1 = null, d2 = null,
+        mloAngle = Math.PI / 4, ccAngle = 0,
+        dragMLO = false, dragCC = false, dragSide = 0, dragSideCC = 0,
+        dragStart, dragStartCC;
+
+      function updateMLOLabel() {
+        const deg = Math.round((Math.PI / 2 - mloAngle) * 180 / Math.PI);
+        const lbl = document.getElementById('l-mlo-label');
+        if (deg <= 0) lbl.textContent = 'Left CC view';
+        else if (deg >= 90) lbl.textContent = 'Left ML view';
+        else lbl.textContent = `Left MLO view (${deg}\u00B0)`;
+      }
+
+      function updateCCLabel() {
+        const deg = Math.round((Math.PI / 2 - ccAngle) * 180 / Math.PI);
+        const lbl = document.getElementById('l-cc-label');
+        if (deg <= 0) lbl.textContent = 'Left CC view';
+        else if (deg >= 90) lbl.textContent = 'Left ML view';
+        else lbl.textContent = `Left MLO view (${deg}\u00B0)`;
+      }
+
+      function snapAngle(a) {
+        const deg = (Math.PI / 2 - a) * 180 / Math.PI;
+        for (const target of [0, 45, 60, 90]) {
+          if (Math.abs(deg - target) <= 3) {
+            return Math.PI / 2 - target * Math.PI / 180;
+          }
+        }
+        return a;
+      }
+      // Helpers
+      function scale(c) { return Math.min(c.width, c.height) * PX_SCALE / R; }
+      function center(c) { return { cx: c.width / 2, cy: c.height / 2 }; }
+      function pxToMath(c, pxX, pxY) { const s = scale(c), { cx, cy } = center(c); return { x: (pxX - cx) / s, y: (cy - pxY) / s }; }
+      function mathToPx(c, x, y) { const s = scale(c), { cx, cy } = center(c); return { pxX: cx + x * s, pxY: cy - y * s }; }
+      function drawBlueX(ctx, pxX, pxY) { ctx.save(); ctx.strokeStyle = '#08080a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pxX - BLUE_X, pxY - BLUE_X); ctx.lineTo(pxX + BLUE_X, pxY + BLUE_X); ctx.moveTo(pxX - BLUE_X, pxY + BLUE_X); ctx.lineTo(pxX + BLUE_X, pxY - BLUE_X); ctx.stroke(); ctx.restore(); }
+
+      // Draw a star with 5 spikes (for left breast)
+      function drawStar(ctx, pxX, pxY, r) { const spikes = 5, step = Math.PI / spikes; ctx.save(); ctx.fillStyle = '#91dac2'; ctx.beginPath(); for (let i = 0; i < spikes * 2; i++) { const ang = i * step - Math.PI / 2; const rad = i % 2 ? r / 2 : r; ctx.lineTo(pxX + Math.cos(ang) * rad, pxY + Math.sin(ang) * rad); } ctx.closePath(); ctx.fill(); ctx.restore(); }
+      // Base drawings
+      function drawCCBase() {
+        ccCtx.clearRect(0, 0, ccCan.width, ccCan.height); const s = scale(ccCan), { cx, cy } = center(ccCan); ccCtx.save(); ccCtx.translate(cx, cy); ccCtx.scale(1, -1);
+        ccCtx.strokeStyle = '#c8a3ff'; ccCtx.lineWidth = 3; ccCtx.beginPath(); ccCtx.arc(0, 0, R * s, 3 * Math.PI / 2, Math.PI / 2); ccCtx.stroke();
+        ccCtx.beginPath(); ccCtx.moveTo(0, -R * s); ccCtx.lineTo(0, R * s); ccCtx.stroke();
+        ccCtx.setLineDash([6, 9]); ccCtx.lineWidth = 3; ccCtx.strokeStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.moveTo(0, 0); ccCtx.lineTo(R * s, 0); ccCtx.stroke(); ccCtx.setLineDash([]);
+        ccCtx.fillStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.arc(R * s, 0, NIP_R, 0, 2 * Math.PI); ccCtx.fill(); ccCtx.restore();
+      }
+      function drawMLOBase() {
+        mloCtx.clearRect(0, 0, mloCan.width, mloCan.height); const s = scale(mloCan), { cx, cy } = center(mloCan); mloCtx.save(); mloCtx.translate(cx, cy); mloCtx.scale(1, -1);
+        mloCtx.strokeStyle = '#ed87a0'; mloCtx.lineWidth = 3; mloCtx.beginPath(); mloCtx.arc(0, 0, R * s, Math.PI / 3, -2 * Math.PI / 3, true); mloCtx.stroke();
+        const p1 = { x: 1.5, y: 2.598 }, p2 = { x: -1.5, y: -2.598 }; mloCtx.beginPath(); mloCtx.moveTo(p1.x * s, p1.y * s); mloCtx.lineTo(p2.x * s, p2.y * s); mloCtx.stroke();
+        const nip = { x: 2.598, y: -1.5 }; mloCtx.setLineDash([6, 9]); mloCtx.lineWidth = 3; mloCtx.strokeStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.moveTo(0, 0); mloCtx.lineTo(nip.x * s, nip.y * s); mloCtx.stroke(); mloCtx.setLineDash([]);
+        mloCtx.fillStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.arc(nip.x * s, nip.y * s, NIP_R, 0, 2 * Math.PI); mloCtx.fill(); mloCtx.restore();
+      }
+      function drawClockBase() {
+        ckCtx.clearRect(0, 0, ckCan.width, ckCan.height); const s = scale(ckCan), { cx, cy } = center(ckCan); ckCtx.save(); ckCtx.translate(cx, cy); ckCtx.scale(1, -1);
+        ckCtx.lineWidth = 3; ckCtx.strokeStyle = '#000'; ckCtx.beginPath(); ckCtx.arc(0, 0, R * s, 0, 2 * Math.PI); ckCtx.stroke();
+
+        ckCtx.lineWidth = 1; ckCtx.strokeStyle = '#bbb';
+        for (let k = 0; k < 12; k++) {
+          const ang = k * Math.PI / 6;
+          ckCtx.beginPath();
+          ckCtx.moveTo(0, 0);
+          ckCtx.lineTo(R * s * Math.cos(ang), R * s * Math.sin(ang));
+          ckCtx.stroke();
+        }
+
+        // 12‑6 o'clock dotted line
+        ckCtx.setLineDash([6, 9]);
+        ckCtx.strokeStyle = '#c8a3ff';
+        ckCtx.lineWidth = 3;
+        const cosC = Math.cos(ccAngle), sinC = Math.sin(ccAngle);
+        ckCtx.beginPath();
+        ckCtx.moveTo(R * s * cosC, -R * s * sinC);
+        ckCtx.lineTo(-R * s * cosC, R * s * sinC);
+        ckCtx.stroke();
+        ckCtx.setLineDash([]);
+
+        // paddles tangent to the circle at 12 and 6 o'clock
+        const padHalf = R * 0.17 * s;      // paddle length in px
+        ckCtx.strokeStyle = "#c8a3ff";
+        ckCtx.lineWidth = 11;
+        ckCtx.beginPath();
+        const pxC = R * 1.06 * s * cosC, pyC = -R * 1.06 * s * sinC;
+        const tCosC = Math.sin(ccAngle), tSinC = Math.cos(ccAngle);
+        ckCtx.moveTo(pxC - padHalf * tCosC, pyC - padHalf * tSinC);   // top paddle
+        ckCtx.lineTo(pxC + padHalf * tCosC, pyC + padHalf * tSinC);
+        ckCtx.moveTo(-pxC - padHalf * tCosC, -pyC - padHalf * tSinC);   // bottom paddle
+        ckCtx.lineTo(-pxC + padHalf * tCosC, -pyC + padHalf * tSinC);
+        ckCtx.stroke();
+
+
+        /* —---- NEW:  MLO line and paddle ----- */
+        ckCtx.setLineDash([6, 9]);            // dotted
+        ckCtx.strokeStyle = '#ed87a0';       // thin pink
+        ckCtx.lineWidth = 3;
+
+        const cosA = Math.cos(mloAngle), sinA = Math.sin(mloAngle);
+        ckCtx.beginPath();
+        ckCtx.moveTo(R * s * cosA, -R * s * sinA);
+        ckCtx.lineTo(-R * s * cosA, R * s * sinA); // stop at the circle, not beyond
+        ckCtx.stroke();
+
+        ckCtx.setLineDash([]);               // reset dashes
+
+        // draggable paddles at both ends of MLO line
+        ckCtx.strokeStyle = '#ed87a0';
+        ckCtx.lineWidth = 11;
+        ckCtx.beginPath();
+        const px = R * 1.06 * s * cosA, py = -R * 1.06 * s * sinA;
+        const tCos = Math.sin(mloAngle), tSin = Math.cos(mloAngle);
+        ckCtx.moveTo(px - padHalf * tCos, py - padHalf * tSin);
+        ckCtx.lineTo(px + padHalf * tCos, py + padHalf * tSin);
+        ckCtx.moveTo(-px - padHalf * tCos, -py - padHalf * tSin);
+        ckCtx.lineTo(-px + padHalf * tCos, -py + padHalf * tSin);
+        ckCtx.stroke();
+
+        // center dot above radiating lines
+        ckCtx.fillStyle = '#666'; ckCtx.beginPath(); ckCtx.arc(0, 0, 10, 0, 2 * Math.PI); ckCtx.fill();
+        ckCtx.restore();
+      }
+      function redrawAll() {
+        drawCCBase(); drawMLOBase(); drawClockBase();
+        // CC point
+        if (ccPt) { const { pxX, pxY } = mathToPx(ccCan, ccPt.x, ccPt.y); ccCtx.fillStyle = '#c8a3ff'; ccCtx.beginPath(); ccCtx.arc(pxX, pxY, DOT_R, 0, 2 * Math.PI); ccCtx.fill(); }
+        if (ccBad) { drawBlueX(ccCtx, ccBad.pxX, ccBad.pxY); }
+        // MLO point
+        if (mloPt) { const { pxX, pxY } = mathToPx(mloCan, mloPt.x, mloPt.y); mloCtx.fillStyle = '#ed87a0'; mloCtx.beginPath(); mloCtx.arc(pxX, pxY, DOT_R, 0, 2 * Math.PI); mloCtx.fill(); }
+        if (mloBad) { drawBlueX(mloCtx, mloBad.pxX, mloBad.pxY); }
+        if (d1 !== null && d2 !== null) {
+          const alpha = Math.PI - ccAngle,
+            beta = Math.PI - mloAngle,
+            sinD = Math.sin(alpha - beta),
+            x = (d1 * Math.cos(beta) - d2 * Math.cos(alpha)) / sinD,
+            y = (d1 * Math.sin(beta) - d2 * Math.sin(alpha)) / sinD;
+          const { pxX, pxY } = mathToPx(ckCan, x, y);
+          drawStar(ckCtx, pxX, pxY, DOT_R * 2);
+        }
+      }
+      function calcClock() {
+        if (d1 === null || d2 === null) return;
+        const alpha = Math.PI - ccAngle,
+          beta = Math.PI - mloAngle,
+          sinD = Math.sin(alpha - beta);
+        if (Math.abs(sinD) < 1e-6) {
+          msg.style.color = 'var(--err)';
+          msg.textContent = 'Lesion localization requires projections from differnt angles';
+          redrawAll();
+          return;
+        }
+        const x = (d1 * Math.cos(beta) - d2 * Math.cos(alpha)) / sinD,
+          y = (d1 * Math.sin(beta) - d2 * Math.sin(alpha)) / sinD;
+        if (x * x + y * y > R * R) {
+          msg.style.color = 'var(--err)';
+          msg.textContent = 'Invalid lesion location calculated';
+          redrawAll();
+          return;
+        }
+        const theta = Math.atan2(y, x) * 180 / Math.PI;
+        let hr = Math.round(((450 - theta) % 360) / 30);
+        if (hr === 0) hr = 12;
+        msg.style.color = 'var(--ok)';
+        msg.textContent = `Lesion at ${hr} o'clock`;
+        redrawAll();
+      }
+      // CC click
+      ccCan.addEventListener('click', ev => {
+        const { offsetX, offsetY } = ev; const { x, y } = pxToMath(ccCan, offsetX, offsetY); ccBad = null; ccPt = null; d1 = null;
+        if (x >= 0 && x * x + y * y <= R * R) { ccPt = { x, y }; d1 = y; } else { ccBad = { pxX: offsetX, pxY: offsetY }; }
+        if (ccBad || mloBad) { let errs = []; if (ccBad) errs.push('CC'); if (mloBad) errs.push('MLO'); msg.style.color = 'var(--aux)'; msg.textContent = `Click is outside the breast (${errs.join(' & ')})`; } else { msg.textContent = ''; }
+        redrawAll(); calcClock();
+      });
+      // MLO click
+      mloCan.addEventListener('click', ev => {
+        const { offsetX, offsetY } = ev; const { x, y } = pxToMath(mloCan, offsetX, offsetY); mloBad = null; mloPt = null; d2 = null;
+        if (y <= SQ3 * x && x * x + y * y <= R * R) { mloPt = { x, y }; d2 = (x + SQ3 * y) / 2; } else { mloBad = { pxX: offsetX, pxY: offsetY }; }
+        if (ccBad || mloBad) { let errs = []; if (ccBad) errs.push('CC'); if (mloBad) errs.push('MLO'); msg.style.color = 'var(--aux)'; msg.textContent = `Click is outside the breast (${errs.join(' & ')})`; } else { msg.textContent = ''; }
+        redrawAll(); calcClock();
+      });
+
+      // --- drag paddles on clock face ---
+      ckCan.addEventListener('pointerdown', ev => {
+        const { x, y } = pxToMath(ckCan, ev.offsetX, ev.offsetY);
+        const hx = 1.05 * R * Math.cos(mloAngle), hy = -1.05 * R * Math.sin(mloAngle);
+        const hx2 = -hx, hy2 = -hy;
+        dragSide = 0; dragSideCC = 0; dragMLO = dragCC = false;
+        if (Math.hypot(x - hx, y - hy) <= 0.7) { dragSide = 1; dragMLO = true; }
+        else if (Math.hypot(x - hx2, y - hy2) <= 0.7) { dragSide = -1; dragMLO = true; }
+        if (dragMLO) { dragStart = mloAngle; return; }
+        const cx1 = 1.05 * R * Math.cos(ccAngle), cy1 = -1.05 * R * Math.sin(ccAngle);
+        const cx2 = -cx1, cy2 = -cy1;
+        if (Math.hypot(x - cx1, y - cy1) <= 0.7) { dragSideCC = 1; dragCC = true; }
+        else if (Math.hypot(x - cx2, y - cy2) <= 0.7) { dragSideCC = -1; dragCC = true; }
+        if (dragCC) dragStartCC = ccAngle;
+      });
+      ckCan.addEventListener('pointermove', ev => {
+        if (dragMLO || dragCC) {
+          const { x, y } = pxToMath(ckCan, ev.offsetX, ev.offsetY);
+          if (dragMLO) {
+            let ang = Math.atan2(-y * dragSide, x * dragSide);
+            if ((dragSide === 1 && x <= 0) || (dragSide === -1 && x >= 0)) ang = Math.PI / 2;
+            if (ang > Math.PI / 2) ang = Math.PI / 2;
+            if (ang < 0) ang = 0;
+            ang = snapAngle(ang);
+            mloAngle = ang;
+          } else if (dragCC) {
+            let ang = Math.atan2(-y * dragSideCC, x * dragSideCC);
+            if ((dragSideCC === 1 && x <= 0) || (dragSideCC === -1 && x >= 0)) ang = Math.PI / 2;
+            if (ang > Math.PI / 2) ang = Math.PI / 2;
+            if (ang < 0) ang = 0;
+            ang = snapAngle(ang);
+            ccAngle = ang;
+          }
+          redrawAll();
+          updateMLOLabel();
+          updateCCLabel();
+          calcClock();
+        }
+      });
+      ckCan.addEventListener('pointerup', () => {
+        dragMLO = dragCC = false;
+        dragSide = dragSideCC = 0;
+        redrawAll();
+        updateMLOLabel();
+        updateCCLabel();
+      });
+      ckCan.addEventListener('pointerleave', () => {
+        dragMLO = dragCC = false;
+        dragSide = dragSideCC = 0;
+        redrawAll();
+        updateMLOLabel();
+        updateCCLabel();
+      });
+
+      // initial draw
+      redrawAll();
+      updateMLOLabel();
+      updateCCLabel();
+    })();
+  </script>
+  <footer id="credit">© 2025 Dr. Y.S.C. · Public use permitted · Code copyright retained</footer>
 </body>
+
 </html>
